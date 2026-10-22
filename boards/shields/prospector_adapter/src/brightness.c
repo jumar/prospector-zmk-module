@@ -4,16 +4,30 @@
 #include <zephyr/drivers/pwm.h>
 #include <zephyr/drivers/led.h>
 #include <zephyr/sys/printk.h>
-
+#include <zephyr/sys/atomic.h>
 #include <zephyr/logging/log.h>
+
+#include <brightness.h>
+
 LOG_MODULE_REGISTER(als, 4);
 
 static const struct device *pwm_leds_dev = DEVICE_DT_GET_ONE(pwm_leds);
 #define DISP_BL DT_NODE_CHILD_IDX(DT_NODELABEL(disp_bl))
 
+K_MUTEX_DEFINE(brightness_lock);
+static bool screen_idle;
+
+static int apply_brightness(uint8_t brightness) {
+    k_mutex_lock(&brightness_lock, K_FOREVER);
+    int ret = led_set_brightness(pwm_leds_dev, DISP_BL, screen_idle ? 0 : brightness);
+    k_mutex_unlock(&brightness_lock);
+    return ret;
+}
+
 #ifdef CONFIG_PROSPECTOR_USE_AMBIENT_LIGHT_SENSOR
 
 static uint8_t current_brightness = 100;
+static atomic_t restore_brightness = ATOMIC_INIT(100);
 
 #define SENSOR_MIN      0       // Minimum sensor reading
 #define SENSOR_MAX      100   // Maximum sensor reading
@@ -56,11 +70,6 @@ uint8_t bl_fade(uint8_t source, uint8_t target) {
 
     while ((increasing && current_brightness < target) ||
            (!increasing && current_brightness > target)) {
-
-        if (led_set_brightness(pwm_leds_dev, DISP_BL, current_brightness)) {
-            LOG_ERR("Failed to set brightness");
-        }
-
         current_brightness += increasing ? FADE_STEP : -FADE_STEP;
 
         // Ensure we don't overshoot bounds
@@ -68,6 +77,11 @@ uint8_t bl_fade(uint8_t source, uint8_t target) {
             current_brightness = 100;
         } else if (current_brightness < 0) {
             current_brightness = 0;
+        }
+
+        atomic_set(&restore_brightness, current_brightness);
+        if (apply_brightness(current_brightness)) {
+            LOG_ERR("Failed to set brightness");
         }
 
         k_msleep(increasing ? FADE_SLEEP_BRIGHTEN_MS : FADE_SLEEP_DARKEN_MS);
@@ -148,11 +162,28 @@ K_THREAD_DEFINE(als_tid, 1024, als_thread, NULL, NULL, NULL, K_LOWEST_APPLICATIO
 #else
 
 static int init_fixed_brightness(void) {
-    led_set_brightness(pwm_leds_dev, DISP_BL, CONFIG_PROSPECTOR_FIXED_BRIGHTNESS);
-
-    return 0;
+    return apply_brightness(CONFIG_PROSPECTOR_FIXED_BRIGHTNESS);
 }
 
 SYS_INIT(init_fixed_brightness, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
 
 #endif
+
+int prospector_display_set_idle(bool idle) {
+    k_mutex_lock(&brightness_lock, K_FOREVER);
+    screen_idle = idle;
+
+    int ret;
+    if (idle) {
+        ret = led_set_brightness(pwm_leds_dev, DISP_BL, 0);
+    } else {
+#ifdef CONFIG_PROSPECTOR_USE_AMBIENT_LIGHT_SENSOR
+        ret = led_set_brightness(pwm_leds_dev, DISP_BL, atomic_get(&restore_brightness));
+#else
+        ret = led_set_brightness(pwm_leds_dev, DISP_BL, CONFIG_PROSPECTOR_FIXED_BRIGHTNESS);
+#endif
+    }
+
+    k_mutex_unlock(&brightness_lock);
+    return ret;
+}

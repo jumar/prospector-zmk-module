@@ -5,7 +5,6 @@ zephyr_library()
 if(CONFIG_SHIELD_PROSPECTOR_ADAPTER)
 
         add_subdirectory(${ZEPHYR_CURRENT_MODULE_DIR}/drivers/display)
-        add_subdirectory(${ZEPHYR_CURRENT_MODULE_DIR}/modules/lvgl)
 
         if(CONFIG_DT_HAS_ZMK_BEHAVIOR_CAPS_WORD_ENABLED)
                 zephyr_library_sources(src/events/caps_word_state_changed.c)
@@ -18,5 +17,6 @@ if(CONFIG_SHIELD_PROSPECTOR_ADAPTER)
 
         zephyr_library_sources(src/events/split_central_status_changed.c)
         zephyr_library_sources(src/split/bluetooth/central_status_changed_observer.c)
+        zephyr_library_sources(boards/shields/prospector_adapter/src/screen_idle.c)
 
 endif()
