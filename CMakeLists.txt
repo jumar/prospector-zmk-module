@@ -17,5 +17,6 @@ if(CONFIG_SHIELD_PROSPECTOR_ADAPTER)
 
         zephyr_library_sources(src/events/split_central_status_changed.c)
         zephyr_library_sources(src/split/bluetooth/central_status_changed_observer.c)
+        zephyr_library_sources(boards/shields/prospector_adapter/src/screen_idle.c)
 
 endif()

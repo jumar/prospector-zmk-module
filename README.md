@@ -102,6 +102,7 @@ CONFIG_PROSPECTOR_FIXED_BRIGHTNESS=80
 ### General
 | Name | Description | Default |
 | ---- | ----------- | ------- |
+| `CONFIG_PROSPECTOR_SCREEN_IDLE_TIMEOUT_S` | Turn off the backlight after this many seconds without keypresses; a keypress from either split half wakes it (0 disables) | 600 |
 | `CONFIG_PROSPECTOR_ROTATE_DISPLAY_180` | Rotate the display 180 degrees | n |
 | `CONFIG_PROSPECTOR_USE_AMBIENT_LIGHT_SENSOR` | Use ambient light sensor for auto brightness | y |
 | `CONFIG_PROSPECTOR_FIXED_BRIGHTNESS` | Fixed display brightness when not using ambient light sensor | 50 (1-100) |

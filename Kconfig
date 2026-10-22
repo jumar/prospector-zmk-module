@@ -24,6 +24,16 @@ config PROSPECTOR_STATUS_SCREEN_OPERATOR
 
 endchoice
 
+config PROSPECTOR_SCREEN_IDLE_TIMEOUT_S
+    int "Screen idle timeout in seconds"
+    default 600
+    range 0 86400
+    depends on SHIELD_PROSPECTOR_ADAPTER
+    help
+      Turn off the display backlight after this many seconds without keypresses.
+      A keypress from either split peripheral turns the backlight back on.
+      Set to 0 to disable automatic screen turn-off.
+
 config PROSPECTOR_ROTATE_DISPLAY_180
     bool "Rotate the display 180 degrees"
     default n
