@@ -4,7 +4,7 @@
 #include <zmk/events/keycode_state_changed.h>
 #include <zmk/event_manager.h>
 
-#include <prospector/brightness.h>
+#include <brightness.h>
 
 LOG_MODULE_REGISTER(prospector_screen_idle, CONFIG_ZMK_LOG_LEVEL);
 
