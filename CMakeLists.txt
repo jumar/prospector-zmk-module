@@ -3,6 +3,7 @@ zephyr_include_directories(${APPLICATION_SOURCE_DIR}/include)
 zephyr_library()
 
 if(CONFIG_SHIELD_PROSPECTOR_ADAPTER)
+        zephyr_include_directories(boards/shields/prospector_adapter/include)
 
         add_subdirectory(${ZEPHYR_CURRENT_MODULE_DIR}/drivers/display)
 
